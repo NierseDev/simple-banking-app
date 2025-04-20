@@ -30,6 +30,20 @@
                 {% if transactions %}
                     {% for transaction in transactions %}
                         {% if transaction.sender_id == current_user.id %}
+                            {% if transaction.transaction_type == 'deposit' and current_user.is_admin %}
+                            <div class="transaction-item">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <strong>Admin Deposit to:</strong> {{ transaction.receiver.username }} ({{ transaction.receiver.account_number }})
+                                        <div class="text-secondary small">{{ transaction.timestamp.strftime('%Y-%m-%d %H:%M') }}</div>
+                                        <span class="badge bg-info">Over-the-counter deposit (Admin action)</span>
+                                    </div>
+                                    <div class="text-primary fw-bold">
+                                        ₱{{ "%.2f"|format(transaction.amount) }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
                             <div class="transaction-item sent">
                                 <div class="d-flex justify-content-between">
                                     <div>
@@ -41,6 +55,7 @@
                                     </div>
                                 </div>
                             </div>
+                            {% endif %}
                         {% else %}
                             <div class="transaction-item received">
                                 <div class="d-flex justify-content-between">
