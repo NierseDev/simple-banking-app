@@ -327,8 +327,15 @@ def create_account():
 @limiter.limit("30 per hour")
 def admin_deposit():
     form = DepositForm()
+    
+    # Handle account lookup from query parameters (for the lookup button)
+    account_details = None
+    if request.args.get('account_number'):
+        account_number = request.args.get('account_number')
+        account_details = User.query.filter_by(account_number=account_number).first()
+    
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
+        user = User.query.filter_by(account_number=form.account_number.data).first()
         if not user:
             flash('User not found')
             return redirect(url_for('admin_deposit'))
@@ -340,25 +347,16 @@ def admin_deposit():
         
         amount = form.amount.data
         
-        # Call deposit money method
-        user.deposit_money(amount, current_user.id)
-        
-        # Record the transaction
-        transaction = Transaction(
-            sender_id=current_user.id,
-            recipient_id=user.id,
-            amount=amount,
-            timestamp=datetime.datetime.utcnow(),
-            transaction_type='admin_deposit'
-        )
-        
-        db.session.add(transaction)
-        db.session.commit()
-        
-        flash(f'Successfully deposited ₱{amount:.2f} to {user.username}')
-        return redirect(url_for('admin_dashboard'))
+        # Call deposit method
+        if user.deposit(amount, current_user):
+            db.session.commit()
+            flash(f'Successfully deposited ₱{amount:.2f} to {user.username}')
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Deposit failed.')
+            return redirect(url_for('admin_deposit'))
     
-    return render_template('admin/deposit.html', title='Deposit Funds', form=form)
+    return render_template('admin/deposit.html', title='Deposit Funds', form=form, account_details=account_details)
 
 @app.route('/admin/edit_user/<int:user_id>', methods=['GET', 'POST'])
 @login_required
