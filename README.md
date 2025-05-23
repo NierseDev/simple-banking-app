@@ -271,3 +271,26 @@ If Redis is not available, the application will automatically fall back to in-me
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Security Assessment Documentation for Simple Banking App 
+
+During the initial reviewing of the original simple banking app, the following vulnerabilities and weaknesses were identified:
+
+1. Session Fixation Risk: Sessions were not explicitly regenerated upon login.
+
+3. Partial Error Handling: Application lacked generic error handling for server-side issues, potentially leaking stack traces.
+
+4. CSRF Protection: While Flask-WTF CSRF protection was included, not all endpoints were verified to be covered.
+
+5. Clickjacking Risk: No explicit HTTP headers to prevent iframe embedding.
+
+## Security Improvements Implemented 
+1. Session Management Enhancements - Regenerated session ID upon successful login.
+
+3. Comprehensive Error Handling - Added a global 500 error handler to suppress technical error messages and log server-side issues internally.
+
+4. CSRF Protection Review - Ensured all POST forms include CSRF tokens via Flask-WTF.
+
+5. Clickjacking Protection - Used Flask-Talisman to set X-Frame-Options: DENY header, preventing the site from being embedded.
+
+
