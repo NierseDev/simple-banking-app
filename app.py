@@ -9,6 +9,7 @@ import secrets
 import pymysql
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter.errors import RateLimitExceeded
+from flask_talisman import Talisman #For enforcing HTTPS and security headers 
 
 # Import extensions
 from extensions import db, login_manager, bcrypt, limiter
@@ -26,6 +27,13 @@ pymysql.install_as_MySQLdb()
 def create_app():
     app = Flask(__name__)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
+
+# Secure session cookie settings
+    app.config.update(
+        SESSION_COOKIE_SECURE=True,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE='Lax'
+    )
 
     # CSRF Protection
     csrf.init_app(app)
@@ -67,6 +75,10 @@ def create_app():
             return jsonify({"error": "Rate limit exceeded", "message": str(e)}), 429
         # Otherwise, return the HTML template
         return render_template('rate_limit_error.html', message=str(e)), 429
+
+
+    # Enable HTTPS & security headers
+    Talisman(app, content_security_policy=None, frame_options="DENY")
 
     return app
 
@@ -111,6 +123,11 @@ if __name__ == '__main__':
     print(f"MYSQL_USER: {os.environ.get('MYSQL_USER')}")
     print(f"MYSQL_DATABASE: {os.environ.get('MYSQL_DATABASE')}")
     
+    #Secure Communication and Error Handling
+    if app.debug:
+        print("⚠ WARNING: Debug mode is active! Never use debug=True in production.")
+
     with app.app_context():
         db.create_all()
+
     app.run(debug=True) 
