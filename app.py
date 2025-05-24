@@ -85,6 +85,17 @@ def create_app():
 # Create Flask app
 app = create_app()
 
+#Fourth security implementation do not enable 
+'''@app.errorhandler(500)
+def internal_server_error(e):
+    print(f"500 Error: {e}")  
+    return render_template('500.html'), 500
+
+#Global 500 error handler 
+@app.route('/trigger-error')
+def trigger_error():
+    raise Exception("This is a test 500 error.")'''
+
 # Import models - must be after db initialization
 from models import User, Transaction
 

@@ -293,4 +293,88 @@ During the initial reviewing of the original simple banking app, the following v
 
 5. Clickjacking Protection - Used Flask-Talisman to set X-Frame-Options: DENY header, preventing the site from being embedded.
 
+## Testing the Security Improvements Implementations using DevTools
+1. Session Management Enhancements
+This regenerates session ID upon login 
+
+Steps taken (Localhost):
+i. In your browser, go to DevTools, then 'Network', then 'Cookies' before and after login.
+ii. Observe that the ```session``` cookie changes after login.
+iii. This confirms session ID regeneration.
+
+Before Login:
+Name: session
+Value: ```eyJfZnJlc2giOmZhbHNlLCJjc3JmX3Rva2VuIjoiMzhjO```
+
+After Login:
+Name: session
+Value: ```.eJwljkFqA0EMBP8y5xwkjaTR-jPLSCNhE0hg1z6F_N0bciq66EP9tL2OPO_t9jxe-dH2x2q35kwlgycsVxUAS7GBbkYwgY2UJkZGVyKGtOtTxuVBSaPX4tHnRUJeyhKdMtSxO23mNAZakGERiI5N2a0WJqUWF7CWI7Qr5HXm8V_TrxnnUfvz-zO__oSFFdJWFBwphJ1zsspMniJgLDhpxmq_b__FPbc.aDEvPg.6_J5qYCp9afEkKO4FgMiTt9yU2s```	
+
+
+2. CSRF Protection Review
+This ensure that all POST forms have CSRF tokens
+
+Steps taken (Localhost):
+i. Submit a credential on Login form.
+ii. In your browser, go to DevTools, then 'Network', then 'Payload'.
+iii. Under the 'Form Data', you'll see the 'csrf_token value'.
+iv. This confirms that ```csrf_token``` field is present.
+
+Form Data (Output):
+csrf_token: ```IjM4YzhmMTI5ZjJjNGNlNTIxMzRlYTQ2NWFlNGE1NTA4NDUxYTJhY2Qi.aDEuiQ.y7q0qyAgUp-jeaWTm11A1SWjcZo```
+username: hasalvador123
+password: your_password
+submit: Login
+
+3. Clickjacking Protection
+This prevents the website from being embedded by setting the X-Frame-Options to DENY header using Flask-Talisman. 
+
+Steps Taken (Localhost):
+i. In your browser, go to 'Network', then go to 'Headers'. 
+ii. Under the 'Response Headers', tick 'Raw'  and you'll see that the X-Frame-Options is really DENIED.
+iii. This confirms that the X-Frame-Options:DENY is implemented. 
+
+Response Header (Output):
+HTTP/1.1 302 FOUND
+Server: ```Werkzeug/2.3.7 Python/3.12.5```
+X-Frame-Options: ```DENY```
+X-Content-Type-Options: ```nosniff```
+Referrer-Policy: ```strict-origin-when-cross-origin```
+Vary: ```Cookie```
+Connection: ```Close```
+
+4. Comprehensive Error Handling
+This enables a global 500 error handler to suppress technical error messages and log-server-side issues internally. 
+
+Steps Taken (Localhost):
+i. Go to Flask app.py and add this below the app = create_app() line of code:
+```@app.errorhandler(500)
+def internal_server_error(e):
+    print(f"500 Error: {e}")  
+    return render_template('500.html'), 500```
+
+#Global 500 error handler 
+@app.route('/trigger-error')
+def trigger_error():
+    raise Exception("This is a test 500 error.")```
+
+ii. Create a 500.html file inside the /templates directory and paste this sample:
+```<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Server Error</title>
+</head>
+<body>
+    <h1>Something went wrong (500)</h1>
+    <p>Sorry, an unexpected error occurred. Please try again later.</p>
+</body>
+</html>``` 
+iii. On the app.py, set app.run(debug=True) to app.run(debug=False). 
+iv. Run the application and go to http://127.0.0.1:5000/trigger-error.
+v. This verifies that the page displays a "Something went wrong (500)" message to the client.
+
+Result:
+```Something went wrong (500)
+Sorry, an unexpected error occurred. Please try again later.```
 
